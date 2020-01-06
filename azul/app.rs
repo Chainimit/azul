@@ -1617,7 +1617,7 @@ fn render_inner<T>(
         gl_context.bind_texture(gl::TEXTURE_2D, 0);
         gl_context.use_program(current_program[0] as u32);
         headless_shared_context.make_not_current();
-    };
+    }
 }
 
 /// When called with glDrawArrays(0, 3), generates a simple triangle that
