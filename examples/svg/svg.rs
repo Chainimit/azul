@@ -67,6 +67,7 @@ fn draw_svg(info: GlCallbackInfo) -> GlCallbackReturn {
 
 fn scroll_map_contents(info: CbInfo) -> UpdateScreen {
 
+    let scroll_x = info.get_mouse_state().scroll_x?;
     let scroll_y = info.get_mouse_state().scroll_y?;
     let keyboard_state = info.get_keyboard_state().clone();
     let mut svg = info.state.svg.borrow_mut();
@@ -80,6 +81,7 @@ fn scroll_map_contents(info: CbInfo) -> UpdateScreen {
             svg.zoom *= 2.0;
         }
     } else {
+        svg.pan_horz += scroll_x;
         svg.pan_vert += scroll_y;
     }
 
