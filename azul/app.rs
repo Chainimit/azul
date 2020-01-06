@@ -506,6 +506,8 @@ impl<T: 'static> App<T> {
                                 });
                             }
 
+                            send_user_event(AzulUpdateEvent::DoHitTest { window_id }, &mut eld);
+
                             if should_scroll_render_from_input_events {
                                 send_user_event(AzulUpdateEvent::UpdateScrollStates { window_id }, &mut eld);
                             }
