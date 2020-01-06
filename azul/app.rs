@@ -1538,6 +1538,9 @@ fn render_inner<T>(
 
     render_api.api.send_transaction(wr_translate::wr_translate_document_id(window.internal.document_id), txn);
 
+    // make sure that all transactions have been processed before starting to render
+    render_api.api.flush_scene_builder();
+
     // Update WR texture cache
     renderer.update();
 
