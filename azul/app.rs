@@ -581,7 +581,6 @@ impl<T: 'static> App<T> {
                                 &mut eld.render_api,
                                 eld.renderer.as_mut().unwrap(),
                                 eld.gl_context.clone(),
-                                WrTransaction::new(),
                                 eld.config.background_color,
                             );
 
@@ -1497,7 +1496,6 @@ fn render_inner<T>(
     render_api: &mut WrApi,
     renderer: &mut WrRenderer,
     gl_context: Rc<dyn Gl>,
-    mut txn: WrTransaction,
     background_color: ColorU,
 ) {
 
@@ -1527,6 +1525,7 @@ fn render_inner<T>(
 
     window.internal.epoch = increase_epoch(window.internal.epoch);
 
+    let mut txn = WrTransaction::new();
     txn.set_window_parameters(
         framebuffer_size.clone(),
         DeviceIntRect::new(DeviceIntPoint::new(0, 0), framebuffer_size),
