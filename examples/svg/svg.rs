@@ -72,14 +72,14 @@ fn scroll_map_contents(info: CbInfo) -> UpdateScreen {
     let keyboard_state = info.get_keyboard_state().clone();
     let mut svg = info.state.svg.borrow_mut();
 
+    // constant hardcoded in app::run_inner
+    // ToDo: define in one central location?
+    const LINE_DELTA: f32 = 38.0;
+
     if keyboard_state.shift_down {
         svg.pan_horz += scroll_y;
     } else if keyboard_state.ctrl_down {
-        if scroll_y.is_sign_positive() {
-            svg.zoom /= 2.0;
-        } else {
-            svg.zoom *= 2.0;
-        }
+        svg.zoom *= (-scroll_y / LINE_DELTA).exp2()
     } else {
         svg.pan_horz += scroll_x;
         svg.pan_vert += scroll_y;
