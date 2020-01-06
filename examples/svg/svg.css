@@ -6,6 +6,7 @@
 .control-btn {
     width: 20px;
     height: 20px;
+    padding: 0px;
     position: absolute;
     text-align: center;
     flex-direction: column;
