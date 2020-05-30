@@ -371,7 +371,7 @@ impl<T: 'static> App<T> {
                             // TODO: Only rebuild UI if the resize is going across a resize boundary
                             send_user_event(AzulUpdateEvent::RebuildUi { window_id }, &mut eld);
                         },
-                        WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => {
+                        WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size: _ } => {
                             let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
                             full_window_state.size.winit_hidpi_factor = *scale_factor as f32;
                             full_window_state.size.hidpi_factor = *scale_factor as f32;
@@ -578,18 +578,6 @@ impl<T: 'static> App<T> {
                 },
                 Event::RedrawRequested (window_id) => {
                     let glutin_window_id = window_id;
-                    let window_id = match eld.window_id_mapping.get(&glutin_window_id) {
-                        Some(s) => *s,
-                        None => {
-                            // glutin also sends events for the root window here!
-                            // However, the root window only exists as a "hidden" window
-                            // to share the same OpenGL context across all windows.
-                            // In this case, simply ignore the event.
-                            *control_flow = ControlFlow::Wait;
-                            return;
-                        }
-                     
-                    };
 
                     let full_window_state = eld.full_window_states.get(&glutin_window_id).unwrap();
                     let mut windowed_context = eld.active_windows.get_mut(&glutin_window_id);
