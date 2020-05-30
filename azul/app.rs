@@ -311,6 +311,26 @@ impl<T: 'static> App<T> {
             let now = Instant::now();
             */
 
+            let mut eld = EventLoopData {
+                data: &mut data,
+                event_loop_target: Some(event_loop_target),
+                resources: &mut resources,
+                timers: &mut timers,
+                tasks: &mut tasks,
+                config: &config,
+                layout_callback,
+                active_windows: &mut active_windows,
+                window_id_mapping: &mut window_id_mapping,
+                reverse_window_id_mapping: &mut reverse_window_id_mapping,
+                full_window_states: &mut full_window_states,
+                ui_state_cache: &mut ui_state_cache,
+                ui_description_cache: &mut ui_description_cache,
+                render_api: &mut render_api,
+                renderer: &mut renderer,
+                hidden_context: &mut hidden_context,
+                gl_context: gl_context.clone(),
+            };
+
             match event {
                 Event::DeviceEvent { .. } => {
                     // ignore high-frequency events
@@ -318,27 +338,6 @@ impl<T: 'static> App<T> {
                     return;
                 },
                 Event::WindowEvent { event, window_id } => {
-
-                    let mut eld = EventLoopData {
-                        data: &mut data,
-                        event_loop_target: Some(event_loop_target),
-                        resources: &mut resources,
-                        timers: &mut timers,
-                        tasks: &mut tasks,
-                        config: &config,
-                        layout_callback,
-                        active_windows: &mut active_windows,
-                        window_id_mapping: &mut window_id_mapping,
-                        reverse_window_id_mapping: &mut reverse_window_id_mapping,
-                        full_window_states: &mut full_window_states,
-                        ui_state_cache: &mut ui_state_cache,
-                        ui_description_cache: &mut ui_description_cache,
-                        render_api: &mut render_api,
-                        renderer: &mut renderer,
-                        hidden_context: &mut hidden_context,
-                        gl_context: gl_context.clone(),
-                    };
-
                     let glutin_window_id = window_id;
                     let window_id = match eld.window_id_mapping.get(&glutin_window_id) {
                         Some(s) => *s,
@@ -571,33 +570,46 @@ impl<T: 'static> App<T> {
                             full_window_state.keyboard_state.current_virtual_keycode = None;
                             full_window_state.keyboard_state.pressed_scancodes.clear();
                         },
-                        WindowEvent::RedrawRequested => {
-
-                            let full_window_state = eld.full_window_states.get(&glutin_window_id).unwrap();
-                            let mut windowed_context = eld.active_windows.get_mut(&glutin_window_id);
-                            let mut windowed_context = windowed_context.as_mut().unwrap();
-
-                            let pipeline_id = windowed_context.internal.pipeline_id;
-
-                            // Render + swap the screen (call webrender + draw to texture)
-                            render_inner(
-                                &mut windowed_context,
-                                &full_window_state,
-                                &mut eld.hidden_context,
-                                &mut eld.render_api,
-                                eld.renderer.as_mut().unwrap(),
-                                eld.gl_context.clone(),
-                                eld.config.background_color,
-                            );
-
-                            // After rendering + swapping, remove the unused OpenGL textures
-                            clean_up_unused_opengl_textures(eld.renderer.as_mut().unwrap().flush_pipeline_info(), &pipeline_id);
-                        },
                         WindowEvent::CloseRequested => {
                             send_user_event(AzulUpdateEvent::CloseWindow { window_id }, &mut eld);
                         },
                         _ => { },
                     }
+                },
+                Event::RedrawRequested (window_id) => {
+                    let glutin_window_id = window_id;
+                    let window_id = match eld.window_id_mapping.get(&glutin_window_id) {
+                        Some(s) => *s,
+                        None => {
+                            // glutin also sends events for the root window here!
+                            // However, the root window only exists as a "hidden" window
+                            // to share the same OpenGL context across all windows.
+                            // In this case, simply ignore the event.
+                            *control_flow = ControlFlow::Wait;
+                            return;
+                        }
+                     
+                    };
+
+                    let full_window_state = eld.full_window_states.get(&glutin_window_id).unwrap();
+                    let mut windowed_context = eld.active_windows.get_mut(&glutin_window_id);
+                    let mut windowed_context = windowed_context.as_mut().unwrap();
+
+                    let pipeline_id = windowed_context.internal.pipeline_id;
+
+                    // Render + swap the screen (call webrender + draw to texture)
+                    render_inner(
+                        &mut windowed_context,
+                        &full_window_state,
+                        &mut eld.hidden_context,
+                        &mut eld.render_api,
+                        eld.renderer.as_mut().unwrap(),
+                        eld.gl_context.clone(),
+                        eld.config.background_color,
+                    );
+
+                    // After rendering + swapping, remove the unused OpenGL textures
+                    clean_up_unused_opengl_textures(eld.renderer.as_mut().unwrap().flush_pipeline_info(), &pipeline_id);
                 },
                 _ => { },
             }
