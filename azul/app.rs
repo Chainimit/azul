@@ -1116,10 +1116,10 @@ fn send_user_event<'a, T>(
 }
 
 fn update_keyboard_state_from_modifier_state(keyboard_state: &mut KeyboardState, modifiers: &GlutinModifiersState) {
-    keyboard_state.shift_down = modifiers.shift;
-    keyboard_state.ctrl_down = modifiers.ctrl;
-    keyboard_state.alt_down = modifiers.alt;
-    keyboard_state.super_down = modifiers.logo;
+    keyboard_state.shift_down = modifiers.shift();
+    keyboard_state.ctrl_down = modifiers.ctrl();
+    keyboard_state.alt_down = modifiers.alt();
+    keyboard_state.super_down = modifiers.logo();
 }
 
 fn initialize_window_states<T>(
