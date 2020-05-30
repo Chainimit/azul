@@ -175,6 +175,14 @@ pub(crate) mod winit_translate {
         WinitPhysicalSize::new(input.width as f64, input.height as f64)
     }
 
+    pub(crate) const fn translate_winit_physical_position(input: WinitPhysicalPosition<f64>) -> PhysicalPosition {
+        PhysicalPosition::new(input.x as f32, input.y as f32)
+    }
+
+    pub(crate) const fn translate_winit_physical_size(input: WinitPhysicalSize<f64>) -> PhysicalSize {
+        PhysicalSize::new(input.width as f32, input.height as f32)
+    }
+
     pub(crate) fn translate_mouse_cursor_type(mouse_cursor_type: MouseCursorType) -> WinitCursorIcon {
         use azul_core::window::MouseCursorType::*;
         match mouse_cursor_type {

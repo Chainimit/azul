@@ -353,33 +353,35 @@ impl<T: 'static> App<T> {
                     };
 
                     match &event {
-                        WindowEvent::Resized(logical_size) => {
+                        WindowEvent::Resized(physical_size) => {
                             {
                                 // relayout, rebuild cached display list, reinitialize scroll states
                                 let mut windowed_context = eld.active_windows.get_mut(&glutin_window_id);
                                 let windowed_context = windowed_context.as_mut().unwrap();
-                                let dpi_factor = windowed_context.display.window().hidpi_factor();
+                                let dpi_factor = windowed_context.display.window().scale_factor();
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
 
                                 full_window_state.size.winit_hidpi_factor = dpi_factor as f32;
                                 full_window_state.size.hidpi_factor = dpi_factor as f32;
-                                full_window_state.size.dimensions = translate_winit_logical_size(*logical_size);
+                                full_window_state.size.dimensions = translate_winit_logical_size(physical_size.to_logical(dpi_factor));
 
                                 windowed_context.display.make_current();
-                                windowed_context.display.windowed_context().unwrap().resize(logical_size.to_physical(dpi_factor));
+                                windowed_context.display.windowed_context().unwrap().resize(*physical_size);
                                 windowed_context.display.make_not_current();
                             }
                             // TODO: Only rebuild UI if the resize is going across a resize boundary
                             send_user_event(AzulUpdateEvent::RebuildUi { window_id }, &mut eld);
                         },
-                        WindowEvent::HiDpiFactorChanged(dpi_factor) => {
+                        WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => {
                             let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                            full_window_state.size.winit_hidpi_factor = *dpi_factor as f32;
-                            full_window_state.size.hidpi_factor = *dpi_factor as f32;
+                            full_window_state.size.winit_hidpi_factor = *scale_factor as f32;
+                            full_window_state.size.hidpi_factor = *scale_factor as f32;
                         },
-                        WindowEvent::Moved(new_window_position) => {
+                        WindowEvent::Moved(physical_position) => {
+                            let windowed_context = eld.active_windows.get_mut(&glutin_window_id).unwrap();
+                            let dpi_factor = windowed_context.display.window().scale_factor();
                             let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                            full_window_state.position = Some(translate_winit_logical_position(*new_window_position));
+                            full_window_state.position = Some(translate_winit_logical_position(physical_position.to_logical(dpi_factor)));
                         },
                         WindowEvent::CursorMoved { position, modifiers, .. } => {
                             {
@@ -516,8 +518,10 @@ impl<T: 'static> App<T> {
                             use glutin::event::TouchPhase::*;
 
                             {
+                                let windowed_context = eld.active_windows.get_mut(&glutin_window_id).unwrap();
+                                let dpi_factor = windowed_context.display.window().scale_factor();
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                                full_window_state.mouse_state.cursor_position = CursorPosition::InWindow(translate_winit_logical_position(*location));
+                                full_window_state.mouse_state.cursor_position = CursorPosition::InWindow(translate_winit_logical_position(location.to_logical(dpi_factor)));
                             }
 
                             match phase {
