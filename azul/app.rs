@@ -382,13 +382,12 @@ impl<T: 'static> App<T> {
                             let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
                             full_window_state.position = Some(translate_winit_logical_position(physical_position.to_logical(dpi_factor)));
                         },
-                        WindowEvent::CursorMoved { position, modifiers, .. } => {
+                        WindowEvent::CursorMoved { position, .. } => {
                             {
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
                                 let world_pos_x = position.x as f32 / full_window_state.size.hidpi_factor * full_window_state.size.winit_hidpi_factor;
                                 let world_pos_y = position.y as f32 / full_window_state.size.hidpi_factor * full_window_state.size.winit_hidpi_factor;
                                 full_window_state.mouse_state.cursor_position = CursorPosition::InWindow(LogicalPosition::new(world_pos_x, world_pos_y));
-                                update_keyboard_state_from_modifier_state(&mut full_window_state.keyboard_state, modifiers);
                             }
                             send_user_event(AzulUpdateEvent::DoHitTest { window_id }, &mut eld);
                         },
@@ -406,14 +405,17 @@ impl<T: 'static> App<T> {
                             }
                             send_user_event(AzulUpdateEvent::DoHitTest { window_id }, &mut eld);
                         },
-                        WindowEvent::KeyboardInput { input: KeyboardInput { state, virtual_keycode, scancode, modifiers, .. }, .. } => {
+                        WindowEvent::ModifiersChanged ( modifiers_state ) => {
+                            let full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
+                            update_keyboard_state_from_modifier_state(&mut full_window_state.keyboard_state, modifiers_state);
+                        },
+                        WindowEvent::KeyboardInput { input: KeyboardInput { state, virtual_keycode, scancode, .. }, .. } => {
 
                             use crate::wr_translate::winit_translate::translate_virtual_keycode;
                             use glutin::event::ElementState;
 
                             {
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                                update_keyboard_state_from_modifier_state(&mut full_window_state.keyboard_state, modifiers);
 
                                 match state {
                                     ElementState::Pressed => {
@@ -447,12 +449,11 @@ impl<T: 'static> App<T> {
 
                             send_user_event(AzulUpdateEvent::DoHitTest { window_id }, &mut eld);
                         },
-                        WindowEvent::MouseInput { state, button, modifiers, .. } => {
+                        WindowEvent::MouseInput { state, button, .. } => {
 
                             {
                                 use glutin::event::{ElementState::*, MouseButton::*};
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                                update_keyboard_state_from_modifier_state(&mut full_window_state.keyboard_state, modifiers);
 
                                 match state {
                                     Pressed => {
@@ -476,7 +477,7 @@ impl<T: 'static> App<T> {
 
                             send_user_event(AzulUpdateEvent::DoHitTest { window_id }, &mut eld);
                         },
-                        WindowEvent::MouseWheel { delta, modifiers, .. } => {
+                        WindowEvent::MouseWheel { delta, .. } => {
 
                             let should_scroll_render_from_input_events;
 
@@ -486,7 +487,6 @@ impl<T: 'static> App<T> {
                                 const LINE_DELTA: f32 = 38.0;
 
                                 let mut full_window_state = eld.full_window_states.get_mut(&glutin_window_id).unwrap();
-                                update_keyboard_state_from_modifier_state(&mut full_window_state.keyboard_state, modifiers);
 
                                 let (scroll_x_px, scroll_y_px) = match delta {
                                     MouseScrollDelta::PixelDelta(p) => (p.x as f32, p.y as f32),
